@@ -1,4 +1,4 @@
-use dep_graph::{DepConstructor, DepNode};
+use dep_graph::{self, DepConstructor, DepNode};
 use errors::DiagnosticBuilder;
 use hir::def_id::{CrateNum, DefId, DefIndex};
 use hir::def::{Def, Export};
@@ -49,6 +49,7 @@ use rustc_data_structures::indexed_vec::IndexVec;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_data_structures::stable_hasher::StableVec;
 use rustc_data_structures::sync::Lrc;
+use rustc_data_structures::fingerprint::Fingerprint;
 use rustc_target::spec::PanicStrategy;
 
 use std::borrow::Cow;
@@ -227,19 +228,19 @@ define_queries! { <'tcx>
 
         /// Fetch the MIR for a given def-id right after it's built - this includes
         /// unreachable code.
-        [] fn mir_built: MirBuilt(DefId) -> &'tcx Steal<mir::Mir<'tcx>>,
+        [no_hash] fn mir_built: MirBuilt(DefId) -> &'tcx Steal<mir::Mir<'tcx>>,
 
         /// Fetch the MIR for a given def-id up till the point where it is
         /// ready for const evaluation.
         ///
         /// See the README for the `mir` module for details.
-        [] fn mir_const: MirConst(DefId) -> &'tcx Steal<mir::Mir<'tcx>>,
+        [no_hash] fn mir_const: MirConst(DefId) -> &'tcx Steal<mir::Mir<'tcx>>,
 
-        [] fn mir_validated: MirValidated(DefId) -> &'tcx Steal<mir::Mir<'tcx>>,
+        [no_hash] fn mir_validated: MirValidated(DefId) -> &'tcx Steal<mir::Mir<'tcx>>,
 
         /// MIR after our optimization passes have run. This is MIR that is ready
         /// for codegen. This is also the only query that can fetch non-local MIR, at present.
-        [] fn optimized_mir: MirOptimized(DefId) -> &'tcx mir::Mir<'tcx>,
+        [no_hash] fn optimized_mir: MirOptimized(DefId) -> &'tcx mir::Mir<'tcx>,
     },
 
     TypeChecking {
@@ -280,7 +281,7 @@ define_queries! { <'tcx>
     TypeChecking {
         [] fn typeck_item_bodies: typeck_item_bodies_dep_node(CrateNum) -> CompileResult,
 
-        [] fn typeck_tables_of: TypeckTables(DefId) -> &'tcx ty::TypeckTables<'tcx>,
+        [no_hash] fn typeck_tables_of: TypeckTables(DefId) -> &'tcx ty::TypeckTables<'tcx>,
     },
 
     Other {
